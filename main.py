@@ -19,9 +19,10 @@ hands = mp_hands.Hands(static_image_mode=False,
                        min_tracking_confidence=0.5)
 mp_draw = mp.solutions.drawing_utils
 
-# Initialize paddle (initially randomly) and puck (at centre) positions
-# Stores paddle positions as a tuple in function 'update_paddle_position()'
+# Initialize paddle and puck positions
+# Stores paddle positions (random) as a tuple in function 'update_paddle_position()'
 paddle = np.random.randint(0, [VIDEO_X - 75, VIDEO_Y - 18], size=2)
+
 # Storing coordinates of the puck as a numpy array [X, Y] (initially at the midpoint)
 puck = np.array([VIDEO_X/2, VIDEO_Y/2]).astype(int)
 
@@ -30,15 +31,20 @@ puck = np.array([VIDEO_X/2, VIDEO_Y/2]).astype(int)
 initial_puck_velocity = np.array([10, 10])
 puck_velocity = initial_puck_velocity.copy()
 
+# Initialize necessary variables
+extra_time = 0
+
 # Load target image and resize it to 30,30
 target_image = cv2.resize(cv2.imread('target.png'), (30, 30))
+
 # Converting the target image from RGB to RGBA
 target_image = cv2.cvtColor(target_image, cv2.COLOR_RGB2RGBA)
 
 # Initialize 5 target positions randomly(remember assignment 2!!)
-target_hit = np.zeros((5,), dtype=np.int16)
-target_positions = np.random.randint(0, [VIDEO_X - 30, VIDEO_Y - 30], size=(5, 2))
 # Leaving a boundary of 30 pixels at the bottom and right side to accomodate the whole target within the frame
+target_positions = np.random.randint(0, [VIDEO_X - 30, VIDEO_Y - 30], size=(5, 2))
+
+target_hit = np.zeros((5,), dtype=np.int16)
 
 # Initialize score
 score = 0
@@ -46,7 +52,7 @@ score = 0
 # Initialize timer variables
 start_time = time.time()
 game_duration = 30  # 1/2 minute in seconds
-current_time = time.time()
+current_time = start_time
 
 # Function to check if the puck is within a 5% acceptance region of a target
 def is_within_acceptance(puck, target, acceptance_percent=5):
@@ -56,8 +62,36 @@ def is_within_acceptance(puck, target, acceptance_percent=5):
         0#make changes here!! #8
     )
 
+def collision_walls():
+    return
+
+def collision_paddle():
+    return
+
+def overlayObj(image, obj, radius, colour):
+    # obj : object coordinates at the centre
+    
+    # Extract a square around the centre of the obj of side (radius*2) pixels
+    obj_roi = image[(obj[1] - radius):(obj[1] + (radius+1)),
+                     (obj[0] - radius):(obj[0] + (radius+1))]
+    
+    # Iterating over each pixel
+        # Each row (from top to bottom)
+    side_sq = 2 * radius + 1
+
+    for y in range(0, side_sq):
+        # Each column (from L to R)
+        for x in range(0, side_sq):
+            ### Checking if the pixel lies in the circle of radius of the puck's radius
+            # Colouring inner circle colour (radius)
+            if ((y-radius)**2 + (x-radius)**2) <= radius**2:
+                obj_roi[y, x] = np.array(colour)
+
+    return
+
 # Function to update paddle positions
 def update_paddle_position(results):
+    
     # Extracting HandLandmark number assigned to index finger tip
     index_finger = mp_hands.HandLandmark.INDEX_FINGER_TIP     # For index finger tip, it is 8
     
@@ -65,27 +99,33 @@ def update_paddle_position(results):
     if results.multi_hand_landmarks:
         # Extracting the details of the hand
         hand = results.multi_hand_landmarks[0]
+        
         # Updating paddle's postions
         global paddle
         paddle = tuple((int(hand.landmark[index_finger].x * VIDEO_X), int(hand.landmark[index_finger].y * VIDEO_Y)))
 
     return 
 
-def update_puck_position(time_difference):
-    # Calculate the distance covered in due time
-    distance_covered = puck_velocity.copy() * round(time_difference)  
-    #np.array(((current_time - previous_time) * puck_velocity*10))
-    # Update puck position
-    global puck
-    puck += distance_covered
+def update_puck_position(time_difference, extra_time):
     
-    return
+    # pixels to be covered in 1s = velocity[0]
+    # time required to cover 1 pixel = 1 / velocity
+    time_req_1pixel = 1 / puck_velocity[0]
+    # print(time_difference + extra_time)
+
+    global puck
+    if time_difference + extra_time >= time_req_1pixel:
+        puck += [1, 1]
+
+    return time_difference - time_req_1pixel
+
 
 while True:
     # Calculate remaining time and elapsed time in minutes and seconds   
     previous_time = current_time
     current_time = time.time()
     elapsed_time = round(current_time - start_time, 2)
+    
     # Calculating remaining time
     remaining_time = game_duration - elapsed_time
     
@@ -99,25 +139,18 @@ while True:
     # Flip the frame horizontally for a later selfie-view display
     image = cv2.flip(frame, 1)
 
-    # Update flag.writeable: of image/frame?
     # Convert the BGR image to RGB
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
     # Process the frame with mediapipe hands
     results = hands.process(image)
 
-    '''# We draw the landmarks and process if we find a hand
-    if results.multi_hand_landmarks:
-        
-        for index, hand in enumerate(results.multi_hand_landmarks):
-            # Highlighting the joints of the hand in the image
-            mp_draw.draw_landmarks(image, hand, mp_hands.HAND_CONNECTIONS)'''
-    
     # Update paddle position based on index finger tip
     update_paddle_position(results)
 
     # Update puck position based on its velocity
-    update_puck_position(current_time - previous_time)
+    extra_time = update_puck_position(current_time - previous_time, extra_time)
+
 
     # Check for collisions with the walls
     # collision_walls()
@@ -135,6 +168,7 @@ while True:
     
     # Overlaying the target images on the frame (one by one)
     for index, target_position in enumerate(target_positions):
+        
         # Skipping the target if it is already hit
         if target_hit[index] == 1:
             continue
@@ -151,40 +185,20 @@ while True:
         for colour_code in range(0, 3):
             target_roi[:, :, colour_code] = (opacity * target_image[:, :, colour_code] +
                                   transparency * target_roi[:, :, colour_code])
-            
-    # Overlaying puck on the frame
-    # Extract a square around the centre of the puck of side 25 pixels
-    puck_roi = image[(puck[1] - 12):(puck[1] + 13),
-                     (puck[0] - 12):(puck[0] + 13)]
     
-    # Iterating over each pixel
-        # Each row (from top to bottom)
-    for y in range(0, 25):
-        # Each column (from L to R)
-        for x in range(0, 25):
-            ### Checking if the pixel lies in the circle of radius of the puck's radius
-            # Colouring inner circle Red (radius = 8)
-            if ((y-12)**2 + (x-12)**2) <= 64:
-                puck_roi[y, x] = np.array([255, 0, 0])
-
-            # Colouring outer circle Orange (radius = 12)
-            elif ((y-12)**2 + (x-12)**2) <= 144:
-                puck_roi[y, x] = np.array([255, 165, 0])
+    # Overlaying puck on the frame
+    overlayObj(image, puck, 12, [255, 0, 0])
 
     # Overlaying paddle on the frame
-    # Extract a rectangle around the centre of the paddle (75x18)
-    paddle_roi = image[(paddle[1] - 9):(paddle[1] + 9),
-                       (paddle[0] - 37):(paddle[0] + 38)]
+    overlayObj(image, paddle, 20, [0, 255, 0])
     
-    paddle_roi[:, :] = np.array([0, 255, 0])
-
     # Display the player's score on the frame (Top Right)
     # X: 640x0.9 = 576
     # Y: 480x0.1 = 48
-    cv2.putText(image, f'Score: {score}', (576, 48), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(image, f'Score: {score}', (576, 48), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
 
     # Display the remaining time on the frame (Top Mid)
-    cv2.putText(image, f'{round(remaining_time, 2)} secs', (320, 48), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(image, f'{round(remaining_time, 2)} secs', (320, 48), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2, cv2.LINE_AA)
 
     # cv2.putText(image, text, coords, cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
 
@@ -196,8 +210,12 @@ while True:
     
     if elapsed_time >= game_duration:
         # Do something
-        print('You lost nigga!')
-        break
+        # image[:, :] = [0, 0, 0]
+        cv2.putText(image, f'YOU LOSE!\n Your Score: {score}', (20, 240), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,255,255), 2, cv2.LINE_AA)
+        cv2.imshow('Virtual Air Hockey', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
+        
+        if elapsed_time > game_duration + 10:
+            break
 
     # Display the resulting frame
     cv2.imshow('Virtual Air Hockey', cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
