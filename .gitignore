@@ -1,0 +1,38 @@
+# === Python bytecode ===
+__pycache__/
+*.py[cod]
+*$py.class
+
+# === Virtual environments ===
+game-env/
+
+# === Environment variable files ===
+.env
+
+# === Logs and dumps ===
+*.log
+*.out
+*.pid
+*.gz
+
+# === OS junk ===
+.DS_Store
+
+# === VSCode settings ===
+.vscode/
+
+# === Jupyter Notebooks checkpoints ===
+.ipynb_checkpoints/
+
+# === Mac-specific ===
+.AppleDouble
+.LSOverride
+
+# === Backup files ===
+*.bak
+*.swp
+*~
+
+# === pytest ===
+.cache/
+.pytest_cache/

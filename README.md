@@ -1,66 +1,133 @@
-# ERC-Assignment-4
+# AirTrack: Vision-Controlled Single-Player Air Hockey Game
 
-## Steps to get you started
+A finger-tracking air hockey game built with OpenCV and MediaPipe. Control a paddle with your index finger to hit targets with a puck!
 
-- Fork the repo
-- clone it on your system
-- make the required changes in the python file (main.py)
-- push your changes on github
-- make a pull request
+## Features
 
-### installation 
+- **Finger Tracking**: Use your index finger to control the paddle
+- **Physics Engine**: Realistic puck movement and collision detection
+- **Target System**: Hit targets to score points and increase difficulty (feature to add)
+- **Timer**: Race against time to hit all targets
+- **Score Tracking**: Keep track of your performance
 
-Navigate to the folder and run the following command to install the required python libraries
+## Project Structure
 
+The project has been restructured into modular components for better organization:
 
-    pip install -r requirements.txt
-**Problem Statement: Virtual Air Hockey Game**
+```
+AirTrack/
+├── config.py              # Game configuration and constants
+├── camera.py              # Camera handling and frame processing
+├── hand_tracker.py        # MediaPipe hand tracking
+├── game_objects.py        # Game objects (Puck, Paddle, Targets)
+├── renderer.py            # Drawing and rendering functions
+├── physics.py             # Physics engine and collision detection
+├── game_state.py          # Game state management
+├── air_hockey_game.py     # Main game class
+├── run_game.py            # Simple launcher script
+├── target.png             # Target image
+└── requirements.txt       # Python dependencies
+```
 
-You are tasked with developing a virtual air hockey game using computer vision and hand tracking. The game should be played using a webcam, where the player controls the paddle with their hand to hit a virtual puck and score points by hitting targets that appear on the screen. The game has a time limit, and the player's objective is to score as many points as possible within the given time.
+## Installation
 
-**Features and Requirements:**
+1. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-1. **Hand Tracking:**
-   - Utilize the `mediapipe` library for hand tracking.
-   - The position of the player's hand, specifically the index finger tip, should control the paddle's position on the screen.
+2. **Ensure you have a webcam connected** (the game uses camera index 0 by default)
 
-2. **Game Elements:**
-   - Display a virtual air hockey table on the screen.
-   - Implement a puck that moves around the screen with an initial velocity.
-   - Create a paddle controlled by the player's hand.
-   - Generate multiple target positions randomly on the screen.The target image has been provided.
+## How to Play
 
-3. **Game Logic:**
-   - The puck should bounce off the walls of the screen.
-   - If the puck collides with the paddle, its vertical velocity should reverse.
-   - If the puck enters the region of a target, the player scores a point, and the target disappears.
-   - After hitting a target, increase the puck's velocity to make the game more challenging.
+### Running the Game
 
-4. **Score and Timer:**
-   - Display the player's score on the screen.
-   - Implement a timer indicating the remaining time to play.
+**Option 1: Using the launcher script**
+```bash
+python run_game.py
+```
 
-5. **Game Over Conditions:**
-   - The game should end when either all targets are hit or the time limit is reached.
-   - Display a game over message with the player's final score.
+**Option 2: Direct execution**
+```bash
+python air_hockey_game.py
+```
 
-6. **User Interface:**
-   - Provide clear and visible text displaying the player's score and the remaining time.
+### Game Controls
 
-7. **User Interaction:**
-   - Allow the player to quit the game by pressing the 'q' key.
+- **Index Finger**: Control the paddle position
+- **'q' key**: Quit the game
+- **Time Limit**: 30 seconds to hit all targets
 
-8. **Visual Effects:**
-   - Add visual effects to represent the puck, paddle, and targets on the screen.
+### Gameplay
 
-9. **Congratulations Message:**
-   - If the player hits all the targets within the time limit, display a congratulations message.
+1. **Objective**: Hit all the targets with the puck before time runs out
+2. **Paddle Control**: Move your index finger in front of the camera to control the green paddle
+3. **Physics**: The blue puck bounces off walls and your paddle
+4. **Scoring**: Each target hit gives you 1 point and increases puck speed
+5. **Victory**: Hit all targets to win!
+6. **Defeat**: Run out of time and lose
 
-10. **Optimizations:**
-   - Optimize the code for efficiency and smooth gameplay.
-   - Implement any additional features or improvements to enhance the gaming experience.
+## Configuration
 
-**Note:** Ensure that the code is well-documented, making it easy for others to understand.Also feel free to add more features to the game to make it more interesting. 
+You can modify game settings in `config.py`: (some of them mentioned below)
 
+- `VIDEO_X, VIDEO_Y`: Camera resolution
+- `GAME_DURATION`: Game time limit in seconds
+- `TARGET_SIZE`: Size of target images
+- `NUM_TARGETS`: Number of targets to hit
+- `PUCK_RADIUS, PADDLE_RADIUS`: Object sizes
+- `INITIAL_PUCK_VELOCITY`: Starting puck speed
 
-**All the Best!!**
+## Technical Details
+
+### Architecture
+
+The game follows a modular design pattern:
+
+- **Separation of Concerns**: Each module handles a specific aspect of the game
+- **Object-Oriented Design**: Classes for game objects and systems
+- **Configuration Management**: Centralized settings in `config.py`
+- **Error Handling**: Graceful handling of camera and tracking errors
+
+### Key Components
+
+1. **HandTracker**: Manages MediaPipe hand detection and finger tracking
+2. **PhysicsEngine**: Handles collision detection and physics calculations
+3. **Renderer**: Manages all drawing and overlay operations
+4. **GameState**: Tracks score, time, and game progression
+5. **TargetManager**: Manages target positions and collision detection
+
+### Dependencies
+
+- `opencv-python`: Computer vision and camera handling
+- `mediapipe`: Hand tracking and landmark detection
+- `numpy`: Numerical operations and array handling
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Camera not found**: Ensure your webcam is connected and not in use by another application
+2. **Hand tracking issues**: Ensure good lighting and keep your hand clearly visible
+3. **Performance issues**: Lower the camera resolution in `config.py` if needed
+
+### Performance Tips
+
+- Ensure good lighting for better hand tracking
+- Keep your hand within the camera frame, but at a shoulder distance from the camera for best experience
+- Close other applications using the camera
+
+## License
+
+This project is part of an ERC assignment and is for educational purposes.
+
+## Contributing
+
+Feel free to improve the game by:
+- Adding new features
+   - Tracking the paddle's velocity to use it as a parameter during collion
+- Optimizing performance
+- Testing bugs and reporting
+- Improving the physics engine 
+   - The collision between the puck and the paddle has margin to improve
+- Enhancing the UI/UX
