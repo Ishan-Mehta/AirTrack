@@ -117,10 +117,6 @@ The game follows a modular design pattern:
 - Keep your hand within the camera frame, but at a shoulder distance from the camera for best experience
 - Close other applications using the camera
 
-## License
-
-This project is part of an ERC assignment and is for educational purposes.
-
 ## Contributing
 
 Feel free to improve the game by:
