@@ -5,6 +5,7 @@ __pycache__/
 
 # === Virtual environments ===
 game-env/
+game_venv/
 
 # === Environment variable files ===
 .env

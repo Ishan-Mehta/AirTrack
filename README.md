@@ -31,6 +31,8 @@ AirTrack/
 
 ## Installation
 
+> **_Note_**: It is better to create a python environment using Python 3.10 to install dependencies fot this game.
+
 1. **Install Python dependencies:**
    ```bash
    pip install -r requirements.txt
@@ -127,3 +129,7 @@ Feel free to improve the game by:
 - Improving the physics engine 
    - The collision between the puck and the paddle has margin to improve
 - Enhancing the UI/UX
+
+## Contact Me:
+
+I am available at my email address: mehtaishan2209@gmail.com
